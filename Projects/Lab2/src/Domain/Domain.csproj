@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Lab2.Domain</RootNamespace>
+    <AssemblyName>Lab2.Domain</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR.Contracts" />
+  </ItemGroup>
+
+</Project>
