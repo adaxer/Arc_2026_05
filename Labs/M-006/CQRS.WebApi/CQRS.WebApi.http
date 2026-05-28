@@ -1,0 +1,30 @@
+@CQRS.WebApi_HostAddress = http://localhost:5275
+
+GET {{CQRS.WebApi_HostAddress}}/orders/
+Accept: application/json
+
+###
+
+GET {{CQRS.WebApi_HostAddress}}/orders/BD300B3B-9640-45C5-8BFF-F803FE98419F
+Accept: application/json
+
+###
+
+POST {{CQRS.WebApi_HostAddress}}/orders/place
+Accept: application/json
+Content-Type: application/json
+{
+  "customerid": "8992C295-AD57-4486-A082-235A0CDA0384",
+  "productid": "FF2A9260-44AC-4D07-9E50-F9F75B842E03"
+}
+
+###
+
+POST {{CQRS.WebApi_HostAddress}}/orders/cancel
+Accept: application/json
+Content-Type: application/json
+{
+  "orderid": "BD300B3B-9640-45C5-8BFF-F803FE98419F"
+}
+
+###

@@ -1,0 +1,46 @@
+@WebApi_HostAddress = http://localhost:5285
+@AccountId = BD300B3B-9640-45C5-8BFF-F803FE98419F
+
+### Open new account
+POST {{WebApi_HostAddress}}/api/accounts
+Content-Type: application/json
+
+{
+  "initialBalance": 1000
+}
+
+### Open account for testing purposes
+
+POST {{WebApi_HostAddress}}/api/accounts?accountId={{AccountId}}
+Content-Type: application/json
+
+{
+  "initialBalance": 1000
+}
+
+### Deposit money
+POST {{WebApi_HostAddress}}/api/accounts/{{AccountId}}/deposit
+Content-Type: application/json
+
+{
+  "accountId": "{{AccountId}}",
+  "amount": 200
+}
+
+### Withdraw money
+POST {{WebApi_HostAddress}}/api/accounts/{{AccountId}}/withdraw
+Content-Type: application/json
+
+{
+  "accountId": "{{AccountId}}",
+  "amount": 500
+}
+
+### Get current balance
+GET {{WebApi_HostAddress}}/api/accounts/{{AccountId}}/balance
+
+### Get account statement
+GET {{WebApi_HostAddress}}/api/accounts/{{AccountId}}/statement
+
+### Close account
+POST {{WebApi_HostAddress}}/api/accounts/{{AccountId}}/close
