@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -32,17 +33,27 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
 
-        builder.Services.AddAuthentication(options =>
+        var authBuilder = builder.Services.AddAuthentication(options =>
             {
+                // Allow both Cookie and Bearer Token authentication
+                // Set Application scheme as default for backward compatibility with Identity API
                 options.DefaultScheme = IdentityConstants.ApplicationScheme;
                 options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-                options.DefaultAuthenticateScheme = IdentityConstants.BearerScheme;
-                options.DefaultChallengeScheme = IdentityConstants.BearerScheme;
-            })
-            .AddBearerToken(IdentityConstants.BearerScheme)
-            .AddIdentityCookies();
+            });
 
-        builder.Services.AddAuthorizationBuilder();
+        authBuilder.AddIdentityCookies();
+        authBuilder.AddBearerToken(IdentityConstants.BearerScheme);
+
+        // Add named policy that accepts BOTH Cookie (Angular) AND Bearer Token (Avalonia)
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy("CookieOrBearer", policy =>
+            {
+                policy.AddAuthenticationSchemes(
+                    IdentityConstants.ApplicationScheme,  // Cookie-based (Angular)
+                    IdentityConstants.BearerScheme         // Bearer Token (Avalonia)
+                );
+                policy.RequireAuthenticatedUser();
+            });
 
         builder.Services
             .AddIdentityCore<ApplicationUser>()

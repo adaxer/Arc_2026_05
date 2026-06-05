@@ -10,7 +10,7 @@ public class TodoLists : IEndpointGroup
 {
     public static void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.RequireAuthorization();
+        groupBuilder.RequireAuthorization("CookieOrBearer");
 
         groupBuilder.MapGet(GetTodoLists);
         groupBuilder.MapPost(CreateTodoList);

@@ -8,7 +8,7 @@ public class BankAccounts : IEndpointGroup
 {
     public static void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.RequireAuthorization();
+        groupBuilder.RequireAuthorization("CookieOrBearer");
 
         groupBuilder.MapPost(OpenBankAccount);
         groupBuilder.MapPost("{accountId}/deposit", Deposit);

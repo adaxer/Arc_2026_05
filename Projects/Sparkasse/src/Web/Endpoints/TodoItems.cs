@@ -10,7 +10,7 @@ public class TodoItems : IEndpointGroup
 {
     public static void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.RequireAuthorization();
+        groupBuilder.RequireAuthorization("CookieOrBearer");
 
         groupBuilder.MapPost(CreateTodoItem);
         groupBuilder.MapPut(UpdateTodoItem, "{id}");

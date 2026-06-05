@@ -14,7 +14,7 @@ public class Users : IEndpointGroup
         // Avalonia client uses /login with useCookies=false (default) to get Bearer tokens
         groupBuilder.MapIdentityApi<ApplicationUser>();
 
-        groupBuilder.MapPost(Logout, "logout").RequireAuthorization();
+        groupBuilder.MapPost(Logout, "logout").RequireAuthorization("CookieOrBearer");
     }
 
     [EndpointSummary("Log out")]
