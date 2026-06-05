@@ -3,10 +3,12 @@ using ADaxer.MvvmNav.Abstractions.Navigation;
 using ADaxer.MvvmNav.Core.ViewModels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Sparkasse.Client.Common.Services;
 
 namespace Sparkasse.Client.Common.ViewModels;
 
-public partial class TodoListDto : ObservableObject
+// ViewModel-specific wrapper for TodoListDto with ObservableCollection
+public partial class TodoListViewModel : ObservableObject
 {
     [ObservableProperty]
     private int _id;
@@ -17,10 +19,28 @@ public partial class TodoListDto : ObservableObject
     [ObservableProperty]
     private string _colour = "#1976d2";
 
-    public ObservableCollection<TodoItemDto> Items { get; } = [];
+    public ObservableCollection<TodoItemViewModel> Items { get; } = [];
+
+    public static TodoListViewModel FromDto(TodoListDto dto)
+    {
+        var vm = new TodoListViewModel
+        {
+            Id = dto.Id,
+            Title = dto.Title,
+            Colour = dto.Colour ?? "#1976d2"
+        };
+
+        foreach (var item in dto.Items)
+        {
+            vm.Items.Add(TodoItemViewModel.FromDto(item));
+        }
+
+        return vm;
+    }
 }
 
-public partial class TodoItemDto : ObservableObject
+// ViewModel-specific wrapper for TodoItemDto
+public partial class TodoItemViewModel : ObservableObject
 {
     [ObservableProperty]
     private int _id;
@@ -40,33 +60,52 @@ public partial class TodoItemDto : ObservableObject
     [ObservableProperty]
     private string? _note;
 
-    public Action<TodoItemDto>? OnDelete { get; set; }
+    public Action<TodoItemViewModel>? OnDelete { get; set; }
 
     [RelayCommand]
     private void Delete()
     {
         OnDelete?.Invoke(this);
     }
+
+    public static TodoItemViewModel FromDto(TodoItemDto dto)
+    {
+        return new TodoItemViewModel
+        {
+            Id = dto.Id,
+            ListId = dto.ListId,
+            Title = dto.Title,
+            Done = dto.Done,
+            Priority = dto.Priority,
+            Note = dto.Note
+        };
+    }
 }
 
 /// <summary>
-/// Todos module. Manages todo lists and items.
+/// Todos module. Manages todo lists and items via WebApi.
 /// </summary>
 public partial class TodosViewModel : ViewModelBase, INavigationAware
 {
+    private readonly ITodoService _todoService;
+
     [ObservableProperty]
     private string _newItemTitle = string.Empty;
 
     [ObservableProperty]
-    private TodoListDto? _selectedList;
+    private TodoListViewModel? _selectedList;
 
     [ObservableProperty]
     private bool _isLoading;
 
-    public ObservableCollection<TodoListDto> Lists { get; } = [];
+    [ObservableProperty]
+    private string? _errorMessage;
 
-    public TodosViewModel()
+    public ObservableCollection<TodoListViewModel> Lists { get; } = [];
+
+    public TodosViewModel(ITodoService todoService)
     {
+        _todoService = todoService;
         Title = "Todo-Listen";
     }
 
@@ -79,31 +118,30 @@ public partial class TodosViewModel : ViewModelBase, INavigationAware
     private async Task LoadTodoLists()
     {
         IsLoading = true;
+        ErrorMessage = null;
         try
         {
-            // TODO: Load todos from API
-            await Task.Delay(300); // Simulate API call
+            var todosVm = await _todoService.GetTodosAsync();
 
             Lists.Clear();
+            foreach (var list in todosVm.Lists)
+            {
+                var listVm = TodoListViewModel.FromDto(list);
 
-            var list1 = new TodoListDto { Id = 1, Title = "Persönlich", Colour = "#2196f3" };
-            var item1 = new TodoItemDto { Id = 1, ListId = 1, Title = "Einkaufen gehen", Done = false };
-            item1.OnDelete = async (item) => await DeleteItem(item);
-            list1.Items.Add(item1);
+                // Wire up delete handler for each item
+                foreach (var item in listVm.Items)
+                {
+                    item.OnDelete = async (i) => await DeleteItem(i);
+                }
 
-            var item2 = new TodoItemDto { Id = 2, ListId = 1, Title = "Code Review", Done = true };
-            item2.OnDelete = async (item) => await DeleteItem(item);
-            list1.Items.Add(item2);
-
-            var list2 = new TodoListDto { Id = 2, Title = "Arbeit", Colour = "#4caf50" };
-            var item3 = new TodoItemDto { Id = 3, ListId = 2, Title = "Meeting vorbereiten", Done = false };
-            item3.OnDelete = async (item) => await DeleteItem(item);
-            list2.Items.Add(item3);
-
-            Lists.Add(list1);
-            Lists.Add(list2);
+                Lists.Add(listVm);
+            }
 
             SelectedList = Lists.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Fehler beim Laden der Todo-Listen: {ex.Message}";
         }
         finally
         {
@@ -117,23 +155,27 @@ public partial class TodosViewModel : ViewModelBase, INavigationAware
         if (!string.IsNullOrWhiteSpace(NewItemTitle) && SelectedList != null)
         {
             IsLoading = true;
+            ErrorMessage = null;
             try
             {
-                // TODO: Call API to create item
-                await Task.Delay(100);
+                var newItemId = await _todoService.CreateTodoItemAsync(SelectedList.Id, NewItemTitle);
 
-                var newItem = new TodoItemDto 
-                { 
-                    Id = SelectedList.Items.Count + 1,
+                var newItem = new TodoItemViewModel
+                {
+                    Id = newItemId,
                     ListId = SelectedList.Id,
-                    Title = NewItemTitle, 
-                    Done = false 
+                    Title = NewItemTitle,
+                    Done = false
                 };
                 newItem.OnDelete = async (item) => await DeleteItem(item);
 
                 SelectedList.Items.Add(newItem);
                 NewItemTitle = string.Empty;
             }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Fehler beim Hinzufügen: {ex.Message}";
+            }
             finally
             {
                 IsLoading = false;
@@ -142,24 +184,40 @@ public partial class TodosViewModel : ViewModelBase, INavigationAware
     }
 
     [RelayCommand]
-    private async Task ToggleItem(TodoItemDto item)
+    private async Task ToggleItem(TodoItemViewModel item)
     {
-        // TODO: Call API to update item
-        await Task.Delay(100);
+        ErrorMessage = null;
+        try
+        {
+            // Toggle the Done state
+            item.Done = !item.Done;
+
+            // Update via API
+            await _todoService.UpdateTodoItemAsync(item.Id, item.Title, item.Done);
+        }
+        catch (Exception ex)
+        {
+            // Revert on error
+            item.Done = !item.Done;
+            ErrorMessage = $"Fehler beim Aktualisieren: {ex.Message}";
+        }
     }
 
     [RelayCommand]
-    private async Task DeleteItem(TodoItemDto item)
+    private async Task DeleteItem(TodoItemViewModel item)
     {
         if (SelectedList != null)
         {
             IsLoading = true;
+            ErrorMessage = null;
             try
             {
-                // TODO: Call API to delete item
-                await Task.Delay(100);
-
+                await _todoService.DeleteTodoItemAsync(item.Id);
                 SelectedList.Items.Remove(item);
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Fehler beim Löschen: {ex.Message}";
             }
             finally
             {
@@ -169,7 +227,7 @@ public partial class TodosViewModel : ViewModelBase, INavigationAware
     }
 
     [RelayCommand]
-    private void SelectList(TodoListDto list)
+    private void SelectList(TodoListViewModel list)
     {
         SelectedList = list;
     }

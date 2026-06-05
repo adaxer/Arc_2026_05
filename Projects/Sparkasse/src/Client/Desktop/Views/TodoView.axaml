@@ -5,7 +5,7 @@
              x:DataType="vm:TodosViewModel">
 
   <Grid ColumnDefinitions="250,*" Margin="20">
-    
+
     <Border Grid.Column="0" 
             Background="#F5F5F5" 
             Padding="15"
@@ -13,11 +13,11 @@
             Margin="0,0,10,0">
       <StackPanel Spacing="10">
         <TextBlock Text="Listen" FontSize="18" FontWeight="Bold"/>
-        
+
         <ListBox ItemsSource="{Binding Lists}"
                  SelectedItem="{Binding SelectedList}">
           <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="vm:TodoListDto">
+            <DataTemplate x:DataType="vm:TodoListViewModel">
               <StackPanel Orientation="Horizontal" Spacing="8">
                 <Border Width="12" Height="12" 
                         Background="{Binding Colour}" 
@@ -32,15 +32,25 @@
         </ListBox>
       </StackPanel>
     </Border>
-    
+
     <StackPanel Grid.Column="1" Spacing="15">
-      
+
+      <!-- Error Message Display -->
+      <Border Background="#FFEBEE" 
+              Padding="10" 
+              CornerRadius="4"
+              IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <TextBlock Text="{Binding ErrorMessage}" 
+                   Foreground="#C62828"
+                   TextWrapping="Wrap"/>
+      </Border>
+
       <TextBlock Text="{Binding SelectedList.Title}" 
                  FontSize="24" 
                  FontWeight="Bold"
                  Foreground="{Binding SelectedList.Colour}"
                  IsVisible="{Binding SelectedList, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-      
+
       <Grid ColumnDefinitions="*,Auto" 
             IsVisible="{Binding SelectedList, Converter={x:Static ObjectConverters.IsNotNull}}">
         <TextBox Grid.Column="0" 
@@ -52,16 +62,16 @@
                 Command="{Binding AddItemCommand}"
                 IsEnabled="{Binding !IsLoading}"/>
       </Grid>
-      
+
       <ProgressBar IsIndeterminate="True" 
                    IsVisible="{Binding IsLoading}" 
                    Height="4"/>
-      
+
       <ScrollViewer MaxHeight="500"
                     IsVisible="{Binding SelectedList, Converter={x:Static ObjectConverters.IsNotNull}}">
         <ItemsControl ItemsSource="{Binding SelectedList.Items}">
           <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="vm:TodoItemDto">
+            <DataTemplate x:DataType="vm:TodoItemViewModel">
               <Border Padding="10" 
                       Margin="0,0,0,5" 
                       Background="#F9F9F9"
@@ -69,6 +79,8 @@
                 <Grid ColumnDefinitions="Auto,*,Auto">
                   <CheckBox Grid.Column="0" 
                             IsChecked="{Binding Done}"
+                            Command="{Binding $parent[ItemsControl].((vm:TodosViewModel)DataContext).ToggleItemCommand}"
+                            CommandParameter="{Binding}"
                             Margin="0,0,10,0"/>
                   <TextBlock Grid.Column="1" 
                              Text="{Binding Title}"
@@ -85,9 +97,9 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
       </ScrollViewer>
-      
+
     </StackPanel>
-    
+
   </Grid>
-  
+
 </UserControl>

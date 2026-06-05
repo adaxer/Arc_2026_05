@@ -31,6 +31,7 @@ public static class ServiceCollectionExtensions
         // Register services that use IHttpClientFactory
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IWeatherService, WeatherService>();
+        services.AddScoped<ITodoService, TodoService>();
 
         return services;
     }

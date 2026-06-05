@@ -9,8 +9,8 @@ import { firstValueFrom } from 'rxjs';
   templateUrl: './login.component.html'
 })
 export class LoginComponent {
-  email = '';
-  password = '';
+  email = 'administrator@localhost';
+  password = 'Administrator1!';
   invalid = false;
 
   constructor(
