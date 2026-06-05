@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sparkasse.Client.Common.ViewModels"
+             xmlns:services="using:Sparkasse.Client.Common.Services"
+             x:Class="Sparkasse.Client.Desktop.Views.WeatherView"
+             x:DataType="vm:WeatherViewModel">
+
+    <DockPanel >
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="Wettervorhersage" FontSize="24" FontWeight="Bold"/>
+
+            <!-- Get Weather Button -->
+            <Button Content="Wetter abrufen"
+                    Command="{Binding GetWeatherCommand}"
+                    HorizontalAlignment="Left"
+                    IsEnabled="{Binding !IsLoading}"/>
+
+            <!-- Loading Indicator -->
+            <ProgressBar IsIndeterminate="True"
+                         IsVisible="{Binding IsLoading}"
+                         Height="4"/>
+
+            <!-- Error Message -->
+            <TextBlock Text="{Binding ErrorMessage}"
+                       Foreground="Red"
+                       IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                       TextWrapping="Wrap"/>
+        </StackPanel>
+        <!-- Weather List -->
+        <ListBox ItemsSource="{Binding Forecasts}"
+                 MinHeight="300">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="services:WeatherForecastDto">
+                    <Border Padding="10" Margin="5" Background="#F5F5F5" CornerRadius="4">
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="{Binding Date, StringFormat='dd.MM.yyyy'}"
+                                       FontWeight="Bold"/>
+                            <TextBlock>
+                                <Run Text="Temperatur: "/>
+                                <Run Text="{Binding TemperatureC}"/>
+                                <Run Text="°C ("/>
+                                <Run Text="{Binding TemperatureF}"/>
+                                <Run Text="°F)"/>
+                            </TextBlock>
+                            <TextBlock Text="{Binding Summary}"
+                                       Opacity="0.8"/>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+    </DockPanel>
+
+</UserControl>

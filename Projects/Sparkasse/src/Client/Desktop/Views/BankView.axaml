@@ -1,0 +1,136 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sparkasse.Client.Common.ViewModels"
+             x:Class="Sparkasse.Client.Desktop.Views.BankView"
+             x:DataType="vm:BankViewModel">
+
+  <ScrollViewer>
+    <StackPanel Spacing="20" Margin="20" MaxWidth="800">
+      
+      <TextBlock Text="Banking" FontSize="24" FontWeight="Bold"/>
+      
+      <!-- Create Account Section -->
+      <Border Background="#F5F5F5" 
+              Padding="15" 
+              CornerRadius="4"
+              IsVisible="{Binding !HasAccount}">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Konto erstellen" FontSize="18" FontWeight="SemiBold"/>
+          <TextBox Text="{Binding AccountHolder}" 
+                   Watermark="Kontoinhaber Name"/>
+          <Button Content="Konto anlegen"
+                  Command="{Binding CreateAccountCommand}"
+                  IsEnabled="{Binding !IsLoading}"
+                  HorizontalAlignment="Left"/>
+        </StackPanel>
+      </Border>
+      
+      <!-- Account Overview -->
+      <Border Background="#E3F2FD" 
+              Padding="15" 
+              CornerRadius="4"
+              IsVisible="{Binding HasAccount}">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Kontoübersicht" FontSize="18" FontWeight="SemiBold"/>
+          <TextBlock>
+            <Run Text="Kontoinhaber: "/>
+            <Run Text="{Binding AccountHolder}" FontWeight="Bold"/>
+          </TextBlock>
+          <TextBlock>
+            <Run Text="Kontonummer: "/>
+            <Run Text="{Binding AccountNumber}"/>
+          </TextBlock>
+          <TextBlock FontSize="20" FontWeight="Bold">
+            <Run Text="Kontostand: "/>
+            <Run Text="{Binding Balance, StringFormat={}{0:C}}"/>
+          </TextBlock>
+        </StackPanel>
+      </Border>
+      
+      <!-- Transaction Section -->
+      <Border Background="#F5F5F5" 
+              Padding="15" 
+              CornerRadius="4"
+              IsVisible="{Binding HasAccount}">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Transaktionen" FontSize="18" FontWeight="SemiBold"/>
+          
+          <TextBox Text="{Binding Amount}" 
+                   Watermark="Betrag"
+                   Width="200"
+                   HorizontalAlignment="Left"/>
+          
+          <WrapPanel>
+            <Button Content="Einzahlen"
+                    Command="{Binding DepositCommand}"
+                    IsEnabled="{Binding !IsLoading}"
+                    Margin="0,0,10,0"/>
+            <Button Content="Abheben"
+                    Command="{Binding WithdrawCommand}"
+                    IsEnabled="{Binding !IsLoading}"
+                    Margin="0,0,10,0"/>
+            <Button Content="Kontoauszug"
+                    Command="{Binding GetStatementCommand}"
+                    IsEnabled="{Binding !IsLoading}"
+                    Margin="0,0,10,0"/>
+            <Button Content="Konto schließen"
+                    Command="{Binding CloseAccountCommand}"
+                    IsEnabled="{Binding !IsLoading}"
+                    Classes="danger"/>
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+      
+      <!-- Status Message -->
+      <TextBlock Text="{Binding StatusMessage}" 
+                 Foreground="Green"
+                 IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                 TextWrapping="Wrap"/>
+      
+      <!-- Loading Indicator -->
+      <ProgressBar IsIndeterminate="True" 
+                   IsVisible="{Binding IsLoading}" 
+                   Height="4"/>
+      
+      <!-- Transaction History -->
+      <Border Background="#F5F5F5" 
+              Padding="15" 
+              CornerRadius="4"
+              IsVisible="{Binding HasAccount}">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Kontoauszug" FontSize="18" FontWeight="SemiBold"/>
+          
+          <ListBox ItemsSource="{Binding Transactions}"
+                   MaxHeight="300">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:TransactionDto">
+                <Border Padding="10" Background="White" CornerRadius="4" Margin="0,2">
+                  <Grid ColumnDefinitions="*,Auto,Auto">
+                    <StackPanel Grid.Column="0">
+                      <TextBlock Text="{Binding Description}" FontWeight="SemiBold"/>
+                      <TextBlock Text="{Binding Date, StringFormat='dd.MM.yyyy HH:mm'}" 
+                                 Opacity="0.7"
+                                 FontSize="12"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" 
+                               Text="{Binding Amount, StringFormat={}{0:C}}"
+                               FontWeight="Bold"
+                               Foreground="{Binding Amount, Converter={StaticResource AmountToColorConverter}}"
+                               Margin="0,0,20,0"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" 
+                               Text="{Binding Balance, StringFormat={}{0:C}}"
+                               VerticalAlignment="Center"
+                               Opacity="0.7"/>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </StackPanel>
+      </Border>
+      
+    </StackPanel>
+  </ScrollViewer>
+  
+</UserControl>

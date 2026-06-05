@@ -1,0 +1,90 @@
+<Window x:Class="Sparkasse.Client.Desktop.Views.ShellWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="clr-namespace:ADaxer.MvvmNav.Avalonia.Views;assembly=ADaxer.MvvmNav.Avalonia"
+        xmlns:vm="using:Sparkasse.Client.Common.ViewModels"
+        x:DataType="vm:ShellViewModel"
+        Title="{Binding Title}"
+        Width="960"
+        Height="540">
+
+    <Grid>
+        <DockPanel>
+
+            <!-- Header -->
+            <Border DockPanel.Dock="Top"
+                    Padding="10"
+                    Background="#EEE">
+                <StackPanel Orientation="Horizontal">
+                    <Button Command="{Binding GoBackCommand}"
+                            Margin="0,0,10,0"
+                            Classes="round"
+                            Content="🔙" />
+                    <TextBlock Text="{Binding Title}"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <!-- Navigation -->
+            <Border DockPanel.Dock="Left"
+                    Background="#F5F5F5"
+                    Padding="10">
+
+                <ItemsControl ItemsSource="{Binding NavigationItems}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:NavigationItem}">
+                            <Button HorizontalContentAlignment="Left" HorizontalAlignment="Stretch"
+                                    BorderThickness="0"
+                                    Background="#E5E5E5"
+                                    Command="{Binding Command}"
+                                    Margin="0,0,0,6"
+                                    Padding="6">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding Subtitle}"
+                                               FontSize="11"
+                                               Opacity="0.7" />
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </Border>
+
+            <!-- Active Module -->
+            <Grid Background="White">
+
+                <TransitioningContentControl RenderTransformOrigin="0,0" Content="{Binding CurrentModule}">
+                    <TransitioningContentControl.PageTransition>
+                        <PageSlide Orientation="Horizontal" Duration="0:00:00.2" />
+                    </TransitioningContentControl.PageTransition>
+                    <TransitioningContentControl.RenderTransform>
+                        <ScaleTransform ScaleX="1.0" ScaleY="1.0" />
+                    </TransitioningContentControl.RenderTransform>
+                </TransitioningContentControl>
+
+                <!-- Busy Overlay -->
+                <Border Background="#80000000"
+                        IsVisible="{Binding IsBusy}">
+                    <TextBlock Text="Loading..."
+                               Foreground="White"
+                               FontSize="18"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
+
+            </Grid>
+
+        </DockPanel>
+
+        <!-- Dialog Overlay -->
+        <Border Background="#80000000"
+                IsVisible="{Binding CurrentDialog, Converter={StaticResource TruthyToBoolConverter}}">
+            <v:AvaloniaDialogView DataContext="{Binding CurrentDialog}" />
+        </Border>
+    </Grid>
+</Window>

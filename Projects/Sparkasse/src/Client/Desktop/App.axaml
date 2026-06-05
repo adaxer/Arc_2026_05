@@ -1,0 +1,41 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="using:Sparkasse.Client.Desktop.Converters"
+            xmlns:vm="using:Sparkasse.Client.Common.ViewModels"
+            xmlns:v="using:Sparkasse.Client.Desktop.Views"
+             xmlns:vc="using:ADaxer.MvvmNav.Avalonia.Views"
+           xmlns:vmc="using:ADaxer.MvvmNav.Core.ViewModels"
+            x:Class="Sparkasse.Client.Desktop.App"
+             RequestedThemeVariant="Default">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Resources>
+        <converters:BoolToStrikethroughConverter x:Key="BoolToStrikethroughConverter"/>
+        <converters:AmountToColorConverter x:Key="AmountToColorConverter"/>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
+
+    <Application.DataTemplates>
+        <DataTemplate DataType="{x:Type vm:WelcomeViewModel}">
+            <v:WelcomeView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:LoginViewModel}">
+            <v:LoginView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:TodosViewModel}">
+            <v:TodoView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BankViewModel}">
+            <v:BankView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:WeatherViewModel}">
+            <v:WeatherView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmc:MessageViewModel}">
+            <vc:MessageView/>
+        </DataTemplate>
+    </Application.DataTemplates>
+</Application>

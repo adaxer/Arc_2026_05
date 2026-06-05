@@ -1,0 +1,93 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sparkasse.Client.Common.ViewModels"
+             x:Class="Sparkasse.Client.Desktop.Views.TodoView"
+             x:DataType="vm:TodosViewModel">
+
+  <Grid ColumnDefinitions="250,*" Margin="20">
+    
+    <Border Grid.Column="0" 
+            Background="#F5F5F5" 
+            Padding="15"
+            CornerRadius="4"
+            Margin="0,0,10,0">
+      <StackPanel Spacing="10">
+        <TextBlock Text="Listen" FontSize="18" FontWeight="Bold"/>
+        
+        <ListBox ItemsSource="{Binding Lists}"
+                 SelectedItem="{Binding SelectedList}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:TodoListDto">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Border Width="12" Height="12" 
+                        Background="{Binding Colour}" 
+                        CornerRadius="6"/>
+                <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding Items.Count}" 
+                           Opacity="0.6"
+                           Margin="5,0,0,0"/>
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </StackPanel>
+    </Border>
+    
+    <StackPanel Grid.Column="1" Spacing="15">
+      
+      <TextBlock Text="{Binding SelectedList.Title}" 
+                 FontSize="24" 
+                 FontWeight="Bold"
+                 Foreground="{Binding SelectedList.Colour}"
+                 IsVisible="{Binding SelectedList, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+      
+      <Grid ColumnDefinitions="*,Auto" 
+            IsVisible="{Binding SelectedList, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <TextBox Grid.Column="0" 
+                 Text="{Binding NewItemTitle}"
+                 Watermark="Neue Aufgabe..."
+                 Margin="0,0,10,0"/>
+        <Button Grid.Column="1" 
+                Content="Hinzufügen"
+                Command="{Binding AddItemCommand}"
+                IsEnabled="{Binding !IsLoading}"/>
+      </Grid>
+      
+      <ProgressBar IsIndeterminate="True" 
+                   IsVisible="{Binding IsLoading}" 
+                   Height="4"/>
+      
+      <ScrollViewer MaxHeight="500"
+                    IsVisible="{Binding SelectedList, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <ItemsControl ItemsSource="{Binding SelectedList.Items}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:TodoItemDto">
+              <Border Padding="10" 
+                      Margin="0,0,0,5" 
+                      Background="#F9F9F9"
+                      CornerRadius="4">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <CheckBox Grid.Column="0" 
+                            IsChecked="{Binding Done}"
+                            Margin="0,0,10,0"/>
+                  <TextBlock Grid.Column="1" 
+                             Text="{Binding Title}"
+                             VerticalAlignment="Center"
+                             TextDecorations="{Binding Done, Converter={StaticResource BoolToStrikethroughConverter}}"/>
+                  <Button Grid.Column="2" 
+                          Content="🗑"
+                          Command="{Binding DeleteCommand}"
+                          Background="Transparent"
+                          BorderThickness="0"/>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+      
+    </StackPanel>
+    
+  </Grid>
+  
+</UserControl>

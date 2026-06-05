@@ -5,3 +5,4 @@
 - Clean Architecture: https://github.com/ardalis/cleanarchitecture
 - Modulith: https://github.com/ardalis/modulith
 - Vertical Slices: https://github.com/SSWConsulting/SSW.VerticalSliceArchitecture
+- DDD: https://github.com/evgenirusev/.NET-Domain-Driven-Design-Template

@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sparkasse.Client.Common.ViewModels"
+             x:Class="Sparkasse.Client.Desktop.Views.LoginView"
+             x:DataType="vm:LoginViewModel">
+
+  <StackPanel Spacing="15" Margin="20" MaxWidth="400">
+    
+    <TextBlock Text="Anmeldung" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+    
+    <!-- Email -->
+    <StackPanel Spacing="5">
+      <TextBlock Text="Email" />
+      <TextBox Text="{Binding Username}" Watermark="email@example.com" />
+    </StackPanel>
+    
+    <!-- Password -->
+    <StackPanel Spacing="5">
+      <TextBlock Text="Passwort" />
+      <TextBox Text="{Binding Password}" 
+               PasswordChar="●" 
+               Watermark="Passwort eingeben" />
+    </StackPanel>
+    
+    <!-- Error Message -->
+    <TextBlock Text="{Binding ErrorMessage}" 
+               Foreground="Red" 
+               IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" 
+               TextWrapping="Wrap"/>
+    
+    <!-- Loading Indicator -->
+    <ProgressBar IsIndeterminate="True" 
+                 IsVisible="{Binding IsLoading}" 
+                 Height="4"/>
+    
+  </StackPanel>
+  
+</UserControl>

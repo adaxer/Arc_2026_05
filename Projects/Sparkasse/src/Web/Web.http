@@ -1,0 +1,211 @@
+﻿# For more info on HTTP files go to https://aka.ms/vs/httpfile
+@Web_HostAddress = https://localhost:7002
+@Email = administrator@localhost
+@Password = Administrator1!
+@AccessToken = CfDJ8D8A96JhYs9Fhg4ZtsTXXB1vbzyV3lk2wDPaKopfrAy8t0qaxNououuEJ0ih1ExFfQpFK2xtt0DCEhah3bC6szqdQ_ttyIzgJ3BxPatBE8gXukSQPWqt_8GbgPTcyNtD4uygnDWLLkkBG0ZXobt2LTWK86BiwajY8y6fa7nrJJtx5Uh6dPAZJOHhFKRHhdrD3zUWOWQQhGMp12X_hfN8yKZVAxuaJVPEHFxUPTZ-iIDJXY-ug9KodEF0ffVbmLwGa-TKtJB3VkLZK5U1KsWBSjsNC3MC6NLlazsfvJPDEO0-vGihodwV-Nepj8Om-sVZxUAEkg4JEzYCAf6ZktaSSOVEsl9Pe3zwQcM1WA1hdn8ImztUsW0DMKmCrEApWPjpczlb1Vr-UecNYYa9JRUHX28we9HjcTBKZza7_fIASPKRKkaI6E3LNQ_LiMUyLedRR-JDVbl58n6xkKzeNyZowCfj8XC0j7Y8xdIyhZdpxGhq3-xEr0rX8W4Os95Tb3xLs4ZVWEPMkHuoTdxJCBHdY3ucKlbaOxqhVVGEH8LGl4_m0ASqmgB-jPhTBE4p0yTrE7FCIHSh54iwKYYQJi9EAdjcwC1J7In9ZHIhJzxebo_Ho2Ej2NveT7BeeXd-KQZQ5Y4rGeywKpVoyEWXu_QDIRwGaTFYCKx7C6e196vSEiuQ856VV4szEAjTxIRw5YcKA5-py-mFPVrvPLITAL-shuUlkFZdLw_-xpa-P9cC3vIp8bW8gh9k-XyPPMM-DMxeUn0EY1oBfjRBIJ1Z1gj3zrL_Jb-VRS31ffYfXuKtT46iVmoHLVNCzn0ypvC08hMsaw
+
+###
+
+# POST Register new user
+# Register a new user account
+POST {{Web_HostAddress}}/api/Users/register
+Content-Type: application/json
+
+{
+  "email": "{{Email}}",
+  "password": "{{Password}}"
+}
+
+###
+
+# POST Login
+# Login with username and password to get an access token
+# @name login
+POST {{Web_HostAddress}}/api/Users/login
+Content-Type: application/json
+
+{
+  "email": "{{Email}}",
+  "password": "{{Password}}"
+}
+
+###
+
+# POST Refresh Token
+# Use refresh token to get a new access token
+POST {{Web_HostAddress}}/api/Users/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{$dotenv REFRESH_TOKEN}}"
+}
+
+###
+
+# POST Logout
+# Logout current user
+POST {{Web_HostAddress}}/api/Users/logout
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+{}
+
+###
+
+# GET WeatherForecast
+GET {{Web_HostAddress}}/api/WeatherForecasts
+Authorization: Bearer {{AccessToken}}
+
+###
+
+# GET TodoLists
+GET {{Web_HostAddress}}/api/TodoLists
+Authorization: Bearer {{AccessToken}}
+
+###
+
+#GET TodoList
+GET {{Web_HostAddress}}/api/TodoLists/1
+Authorization: Bearer {{AccessToken}}
+
+###
+
+# POST TodoLists
+POST {{Web_HostAddress}}/api/TodoLists
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+// CreateTodoListCommand
+{
+  "Title": "Backlog"
+}
+
+###
+
+# PUT TodoLists
+PUT {{Web_HostAddress}}/api/TodoLists/1
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+// UpdateTodoListCommand
+{
+  "Id": 1,
+  "Title": "Product Backlog"
+}
+
+###
+
+# DELETE TodoLists
+DELETE {{Web_HostAddress}}/api/TodoLists/1
+Authorization: Bearer {{AccessToken}}
+
+###
+
+# GET TodoItems
+@PageNumber = 1
+@PageSize = 10
+GET {{Web_HostAddress}}/api/TodoItems?ListId=1&PageNumber={{PageNumber}}&PageSize={{PageSize}}
+Authorization: Bearer {{AccessToken}}
+
+###
+
+# POST TodoItems
+POST {{Web_HostAddress}}/api/TodoItems
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+// CreateTodoItemCommand
+{
+  "ListId": 1,
+  "Title": "Eat a burrito 🌯"
+}
+
+###
+
+#PUT TodoItems UpdateItemDetails
+PUT {{Web_HostAddress}}/api/TodoItems/UpdateItemDetails?Id=1
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+// UpdateTodoItemDetailCommand
+{
+  "Id": 1,
+  "ListId": 1,
+  "Priority": 3,
+  "Note": "This is a good idea!"
+}
+
+###
+
+# PUT TodoItems
+PUT {{Web_HostAddress}}/api/TodoItems/1
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+// UpdateTodoItemCommand
+{
+  "Id": 1,
+  "Title": "Eat a yummy burrito 🌯",
+  "Done": true
+}
+
+###
+
+# DELETE TodoItem
+DELETE {{Web_HostAddress}}/api/TodoItems/1
+Authorization: Bearer {{AccessToken}}
+
+###
+
+########################################
+# BankAccounts Endpoints
+########################################
+
+@AccountId = 7041468d-52f2-4a24-9747-175f43f4191d
+
+# POST Open Bank Account
+POST {{Web_HostAddress}}/api/BankAccounts
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+{
+  "initialBalance": 1000.00
+}
+
+###
+
+# POST Deposit Money
+POST {{Web_HostAddress}}/api/BankAccounts/{{AccountId}}/deposit?amount=250.00
+Authorization: Bearer {{AccessToken}}
+
+###
+
+# POST Withdraw Money
+POST {{Web_HostAddress}}/api/BankAccounts/{{AccountId}}/withdraw?amount=100.00
+Authorization: Bearer {{AccessToken}}
+
+###
+
+# POST Withdraw Money wrong id
+POST {{Web_HostAddress}}/api/BankAccounts/{{AccountId}}/withdraw?amount=100.00
+Authorization: Bearer {{AccessToken}}
+
+###
+
+# GET Account Balance
+GET {{Web_HostAddress}}/api/BankAccounts/{{AccountId}}/balance
+Authorization: Bearer {{AccessToken}}
+
+###
+
+# GET Account Statement
+GET {{Web_HostAddress}}/api/BankAccounts/{{AccountId}}/statement
+Authorization: Bearer {{AccessToken}}
+
+###
+
+# DELETE Close Account
+DELETE {{Web_HostAddress}}/api/BankAccounts/{{AccountId}}/close
+Authorization: Bearer {{AccessToken}}
+
+###
