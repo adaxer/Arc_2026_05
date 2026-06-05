@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of, firstValueFrom } from 'rxjs';
-import { tap, catchError, map, switchMap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { tap, catchError, map } from 'rxjs/operators';
 import { LoginRequest, RegisterRequest, UsersClient } from '../app/web-api-client';
 
 @Injectable({
@@ -9,38 +9,21 @@ import { LoginRequest, RegisterRequest, UsersClient } from '../app/web-api-clien
 export class AuthService {
   private _isAuthenticated = new BehaviorSubject<boolean>(false);
   isAuthenticated$ = this._isAuthenticated.asObservable();
-  private _initialized = false;
 
   constructor(private usersClient: UsersClient) {}
 
-  async initialize(): Promise<void> {
-    if (this._initialized) {
-      return;
-    }
-    this._initialized = true;
-
-    await this.checkAuthStatus();
-  }
-
-  private async checkAuthStatus(): Promise<void> {
-    try {
-      await firstValueFrom(this.usersClient.infoGET());
-      this._isAuthenticated.next(true);
-    } catch {
-      this._isAuthenticated.next(false);
-    }
+  initialize(): Observable<boolean> {
+    return this.usersClient.infoGET().pipe(
+      map(() => true),
+      catchError(() => of(false)),
+      tap(isAuth => this._isAuthenticated.next(isAuth))
+    );
   }
 
   login(email: string, password: string): Observable<void> {
     return this.usersClient.login(true, undefined, new LoginRequest({ email, password })).pipe(
-      switchMap(() => this.usersClient.infoGET()),
       tap(() => this._isAuthenticated.next(true)),
-      map(() => void 0),
-      catchError((error) => {
-        console.error('Login failed:', error);
-        this._isAuthenticated.next(false);
-        throw error;
-      })
+      map(() => void 0)
     );
   }
 
@@ -51,9 +34,6 @@ export class AuthService {
   logout(): Observable<void> {
     return this.usersClient.logout({}).pipe(
       tap(() => this._isAuthenticated.next(false))
-    );
-  }
-}
     );
   }
 }

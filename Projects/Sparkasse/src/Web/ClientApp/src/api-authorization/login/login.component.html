@@ -1,6 +1,6 @@
 <article>
   <h2>Log in</h2>
-  <form (ngSubmit)="login(); $event.preventDefault()" #loginForm="ngForm" (submit)="$event.preventDefault()">
+  <form (ngSubmit)="login()" #loginForm="ngForm">
     <label for="email">Email</label>
     <input type="email" id="email" name="email" [(ngModel)]="email"
       [attr.aria-invalid]="invalid ? true : null"

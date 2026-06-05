@@ -24,18 +24,9 @@ export class LoginComponent {
     this.invalid = false;
     try {
       await firstValueFrom(this.authService.login(this.email, this.password));
-
-      // Get return URL, but avoid redirecting back to login
-      let returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
-
-      // If returnUrl is login or register, go to home instead
-      if (returnUrl === '/login' || returnUrl === '/register' || returnUrl.startsWith('/login') || returnUrl.startsWith('/register')) {
-        returnUrl = '/';
-      }
-
+      const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
       await this.router.navigateByUrl(returnUrl);
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch {
       this.invalid = true;
       this.cdr.detectChanges();
     }
