@@ -16,8 +16,8 @@
               IsVisible="{Binding !HasAccount}">
         <StackPanel Spacing="10">
           <TextBlock Text="Konto erstellen" FontSize="18" FontWeight="SemiBold"/>
-          <TextBox Text="{Binding AccountHolder}" 
-                   Watermark="Kontoinhaber Name"/>
+          <TextBox Text="{Binding InitialBalance}" 
+                   Watermark="Anfangssaldo (z.B. 100)"/>
           <Button Content="Konto anlegen"
                   Command="{Binding CreateAccountCommand}"
                   IsEnabled="{Binding !IsLoading}"
@@ -32,10 +32,6 @@
               IsVisible="{Binding HasAccount}">
         <StackPanel Spacing="8">
           <TextBlock Text="Kontoübersicht" FontSize="18" FontWeight="SemiBold"/>
-          <TextBlock>
-            <Run Text="Kontoinhaber: "/>
-            <Run Text="{Binding AccountHolder}" FontWeight="Bold"/>
-          </TextBlock>
           <TextBlock>
             <Run Text="Kontonummer: "/>
             <Run Text="{Binding AccountNumber}"/>
@@ -86,6 +82,16 @@
                  Foreground="Green"
                  IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                  TextWrapping="Wrap"/>
+
+      <!-- Error Message -->
+      <Border Background="#FFEBEE" 
+              Padding="10" 
+              CornerRadius="4"
+              IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <TextBlock Text="{Binding ErrorMessage}" 
+                   Foreground="Red"
+                   TextWrapping="Wrap"/>
+      </Border>
       
       <!-- Loading Indicator -->
       <ProgressBar IsIndeterminate="True" 
@@ -103,7 +109,7 @@
           <ListBox ItemsSource="{Binding Transactions}"
                    MaxHeight="300">
             <ListBox.ItemTemplate>
-              <DataTemplate x:DataType="vm:TransactionDto">
+              <DataTemplate x:DataType="vm:TransactionViewModel">
                 <Border Padding="10" Background="White" CornerRadius="4" Margin="0,2">
                   <Grid ColumnDefinitions="*,Auto,Auto">
                     <StackPanel Grid.Column="0">

@@ -32,6 +32,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IWeatherService, WeatherService>();
         services.AddScoped<ITodoService, TodoService>();
+        services.AddSingleton<IBankAccountService, BankAccountService>();
 
         return services;
     }

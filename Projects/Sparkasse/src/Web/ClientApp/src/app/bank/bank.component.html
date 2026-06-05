@@ -1,0 +1,141 @@
+<div class="bank-container">
+  <h1>Banking</h1>
+
+  <!-- Loading Indicator -->
+  @if (isLoading()) {
+    <progress></progress>
+  }
+
+  <!-- Error Message -->
+  @if (errorMessage()) {
+    <article class="error-message">
+      <p>{{ errorMessage() }}</p>
+    </article>
+  }
+
+  <!-- Status Message -->
+  @if (statusMessage() && !errorMessage()) {
+    <article class="success-message">
+      <p>{{ statusMessage() }}</p>
+    </article>
+  }
+
+  <!-- Create Account Section -->
+  @if (!hasAccount()) {
+    <article>
+      <header>
+        <h2>Konto erstellen</h2>
+      </header>
+      <div class="create-account-form">
+        <label for="initialBalance">
+          Anfangssaldo
+          <input 
+            type="number" 
+            id="initialBalance" 
+            [ngModel]="initialBalance()"
+            (ngModelChange)="initialBalance.set($event)"
+            placeholder="100" 
+            min="0"
+            step="10" />
+        </label>
+        <button 
+          (click)="createAccount()" 
+          [disabled]="isLoading()">
+          Konto anlegen
+        </button>
+      </div>
+    </article>
+  }
+
+  <!-- Account Overview -->
+  @if (hasAccount()) {
+    <article class="account-overview">
+      <header>
+        <h2>Kontoübersicht</h2>
+      </header>
+      <div class="account-info">
+        <p><strong>Kontonummer:</strong> {{ accountId() }}</p>
+        <p class="balance"><strong>Kontostand:</strong> {{ balance().toFixed(2) }} €</p>
+      </div>
+    </article>
+
+    <!-- Transactions Section -->
+    <article>
+      <header>
+        <h2>Transaktionen</h2>
+      </header>
+      <div class="transaction-form">
+        <label for="amount">
+          Betrag
+          <input 
+            type="number" 
+            id="amount" 
+            [ngModel]="amount()"
+            (ngModelChange)="amount.set($event)"
+            placeholder="0.00" 
+            min="0"
+            step="10" />
+        </label>
+        <div class="button-group">
+          <button 
+            (click)="deposit()" 
+            [disabled]="isLoading() || amount() <= 0"
+            class="secondary">
+            Einzahlen
+          </button>
+          <button 
+            (click)="withdraw()" 
+            [disabled]="isLoading() || amount() <= 0"
+            class="secondary">
+            Auszahlen
+          </button>
+          <button 
+            (click)="getStatement()" 
+            [disabled]="isLoading()"
+            class="secondary">
+            Kontoauszug
+          </button>
+          <button 
+            (click)="closeAccount()" 
+            [disabled]="isLoading()"
+            class="contrast">
+            Konto schließen
+          </button>
+        </div>
+      </div>
+    </article>
+
+    <!-- Statement List -->
+    @if (transactions().length > 0) {
+      <article>
+        <header>
+          <h2>Kontoauszug</h2>
+        </header>
+        <div class="statement-list">
+          <table>
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Beschreibung</th>
+                <th class="amount-column">Betrag</th>
+                <th class="balance-column">Kontostand</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (transaction of transactions(); track transaction.timestamp) {
+                <tr>
+                  <td>{{ transaction.timestamp.toLocaleString('de-DE') }}</td>
+                  <td>{{ transaction.description }}</td>
+                  <td class="amount-column" [class.positive]="transaction.amount && transaction.amount >= 0" [class.negative]="transaction.amount && transaction.amount < 0">
+                    {{ transaction.amount?.toFixed(2) ?? '—' }} €
+                  </td>
+                  <td class="balance-column">{{ transaction.balance?.toFixed(2) ?? '—' }} €</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+    }
+  }
+</div>

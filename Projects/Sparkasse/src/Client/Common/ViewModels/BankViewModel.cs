@@ -3,10 +3,11 @@ using ADaxer.MvvmNav.Abstractions.Navigation;
 using ADaxer.MvvmNav.Core.ViewModels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Sparkasse.Client.Common.Services;
 
 namespace Sparkasse.Client.Common.ViewModels;
 
-public partial class TransactionDto : ObservableObject
+public partial class TransactionViewModel : ObservableObject
 {
     [ObservableProperty]
     private DateTime _date;
@@ -19,13 +20,27 @@ public partial class TransactionDto : ObservableObject
 
     [ObservableProperty]
     private decimal _balance;
+
+    public static TransactionViewModel FromDto(BankAccountTransactionDto dto)
+    {
+        return new TransactionViewModel
+        {
+            Date = dto.Date,
+            Description = dto.Description,
+            Amount = dto.Amount,
+            Balance = dto.Balance
+        };
+    }
 }
 
 /// <summary>
-/// Banking module. Manages bank account operations.
+/// Banking module. Manages bank account operations via WebApi.
 /// </summary>
 public partial class BankViewModel : ViewModelBase, INavigationAware
 {
+    private readonly IBankAccountService _bankAccountService;
+    private Guid? _accountId;
+
     [ObservableProperty]
     private string _accountNumber = string.Empty;
 
@@ -39,7 +54,13 @@ public partial class BankViewModel : ViewModelBase, INavigationAware
     private decimal _amount = 0;
 
     [ObservableProperty]
+    private decimal _initialBalance = 100;
+
+    [ObservableProperty]
     private string _statusMessage = string.Empty;
+
+    [ObservableProperty]
+    private string? _errorMessage;
 
     [ObservableProperty]
     private bool _isLoading;
@@ -47,10 +68,11 @@ public partial class BankViewModel : ViewModelBase, INavigationAware
     [ObservableProperty]
     private bool _hasAccount;
 
-    public ObservableCollection<TransactionDto> Transactions { get; } = [];
+    public ObservableCollection<TransactionViewModel> Transactions { get; } = [];
 
-    public BankViewModel()
+    public BankViewModel(IBankAccountService bankAccountService)
     {
+        _bankAccountService = bankAccountService;
         Title = "Banking";
     }
 
@@ -62,13 +84,31 @@ public partial class BankViewModel : ViewModelBase, INavigationAware
     private async Task CheckAccount()
     {
         IsLoading = true;
+        ErrorMessage = null;
         try
         {
-            // TODO: Call API to check if account exists
-            await Task.Delay(300);
+            // Check if we have a stored account ID from previous session
+            _accountId = _bankAccountService.CurrentAccountId;
 
-            // Simulate existing account
+            if (_accountId.HasValue)
+            {
+                // Try to get balance to verify account still exists
+                Balance = await _bankAccountService.GetBalanceAsync(_accountId.Value);
+                AccountNumber = _accountId.Value.ToString();
+                HasAccount = true;
+                StatusMessage = "Konto geladen.";
+            }
+            else
+            {
+                HasAccount = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Account might not exist anymore (in-memory store was reset)
+            _accountId = null;
             HasAccount = false;
+            ErrorMessage = $"Kontoprüfung fehlgeschlagen: {ex.Message}";
         }
         finally
         {
@@ -79,22 +119,29 @@ public partial class BankViewModel : ViewModelBase, INavigationAware
     [RelayCommand]
     private async Task CreateAccount()
     {
-        if (string.IsNullOrWhiteSpace(AccountHolder))
+        if (InitialBalance < 0)
         {
-            StatusMessage = "Bitte Kontoinhaber angeben.";
+            ErrorMessage = "Anfangssaldo darf nicht negativ sein.";
             return;
         }
 
         IsLoading = true;
+        ErrorMessage = null;
+        StatusMessage = string.Empty;
         try
         {
-            // TODO: Call API to create account
-            await Task.Delay(500);
-
-            AccountNumber = $"DE{Random.Shared.Next(10, 99)} {Random.Shared.Next(1000, 9999)} {Random.Shared.Next(1000, 9999)} {Random.Shared.Next(1000, 9999)} {Random.Shared.Next(1000, 9999)} {Random.Shared.Next(10, 99)}";
-            Balance = 0;
+            _accountId = await _bankAccountService.OpenAccountAsync(InitialBalance);
+            AccountNumber = _accountId.Value.ToString();
+            Balance = InitialBalance;
             HasAccount = true;
-            StatusMessage = "Konto erfolgreich erstellt.";
+            StatusMessage = $"Konto erfolgreich erstellt. ID: {_accountId}";
+
+            // Load initial statement
+            await LoadStatement();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Fehler beim Erstellen des Kontos: {ex.Message}";
         }
         finally
         {
@@ -107,27 +154,31 @@ public partial class BankViewModel : ViewModelBase, INavigationAware
     {
         if (Amount <= 0)
         {
-            StatusMessage = "Bitte einen gültigen Betrag eingeben.";
+            ErrorMessage = "Bitte einen gültigen Betrag eingeben (> 0).";
+            return;
+        }
+
+        if (!_accountId.HasValue)
+        {
+            ErrorMessage = "Kein Konto vorhanden.";
             return;
         }
 
         IsLoading = true;
+        ErrorMessage = null;
+        StatusMessage = string.Empty;
         try
         {
-            // TODO: Call API to deposit
-            await Task.Delay(300);
-
-            Balance += Amount;
-            Transactions.Insert(0, new TransactionDto
-            {
-                Date = DateTime.Now,
-                Description = "Einzahlung",
-                Amount = Amount,
-                Balance = Balance
-            });
-
-            StatusMessage = $"Einzahlung von {Amount:C} erfolgreich.";
+            Balance = await _bankAccountService.DepositAsync(_accountId.Value, Amount);
+            StatusMessage = $"Einzahlung von {Amount:C} erfolgreich. Neuer Kontostand: {Balance:C}";
             Amount = 0;
+
+            // Reload statement to show new transaction
+            await LoadStatement();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Fehler bei der Einzahlung: {ex.Message}";
         }
         finally
         {
@@ -140,33 +191,31 @@ public partial class BankViewModel : ViewModelBase, INavigationAware
     {
         if (Amount <= 0)
         {
-            StatusMessage = "Bitte einen gültigen Betrag eingeben.";
+            ErrorMessage = "Bitte einen gültigen Betrag eingeben (> 0).";
             return;
         }
 
-        if (Amount > Balance)
+        if (!_accountId.HasValue)
         {
-            StatusMessage = "Unzureichendes Guthaben.";
+            ErrorMessage = "Kein Konto vorhanden.";
             return;
         }
 
         IsLoading = true;
+        ErrorMessage = null;
+        StatusMessage = string.Empty;
         try
         {
-            // TODO: Call API to withdraw
-            await Task.Delay(300);
-
-            Balance -= Amount;
-            Transactions.Insert(0, new TransactionDto
-            {
-                Date = DateTime.Now,
-                Description = "Auszahlung",
-                Amount = -Amount,
-                Balance = Balance
-            });
-
-            StatusMessage = $"Auszahlung von {Amount:C} erfolgreich.";
+            Balance = await _bankAccountService.WithdrawAsync(_accountId.Value, Amount);
+            StatusMessage = $"Auszahlung von {Amount:C} erfolgreich. Neuer Kontostand: {Balance:C}";
             Amount = 0;
+
+            // Reload statement to show new transaction
+            await LoadStatement();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Fehler bei der Auszahlung: {ex.Message}";
         }
         finally
         {
@@ -177,18 +226,30 @@ public partial class BankViewModel : ViewModelBase, INavigationAware
     [RelayCommand]
     private async Task CloseAccount()
     {
+        if (!_accountId.HasValue)
+        {
+            ErrorMessage = "Kein Konto vorhanden.";
+            return;
+        }
+
         IsLoading = true;
+        ErrorMessage = null;
+        StatusMessage = string.Empty;
         try
         {
-            // TODO: Call API to close account
-            await Task.Delay(500);
+            var finalBalance = await _bankAccountService.CloseAccountAsync(_accountId.Value);
 
             HasAccount = false;
+            _accountId = null;
             AccountNumber = string.Empty;
             AccountHolder = string.Empty;
             Balance = 0;
             Transactions.Clear();
-            StatusMessage = "Konto wurde geschlossen.";
+            StatusMessage = $"Konto wurde geschlossen. Finaler Kontostand: {finalBalance:C}";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Fehler beim Schließen des Kontos: {ex.Message}";
         }
         finally
         {
@@ -199,13 +260,36 @@ public partial class BankViewModel : ViewModelBase, INavigationAware
     [RelayCommand]
     private async Task GetStatement()
     {
+        if (!_accountId.HasValue)
+        {
+            ErrorMessage = "Kein Konto vorhanden.";
+            return;
+        }
+
+        await LoadStatement();
+    }
+
+    private async Task LoadStatement()
+    {
+        if (!_accountId.HasValue) return;
+
         IsLoading = true;
+        ErrorMessage = null;
         try
         {
-            // TODO: Call API to get statement
-            await Task.Delay(300);
+            var statement = await _bankAccountService.GetStatementAsync(_accountId.Value);
+
+            Transactions.Clear();
+            foreach (var transaction in statement.OrderByDescending(t => t.Date))
+            {
+                Transactions.Add(TransactionViewModel.FromDto(transaction));
+            }
 
             StatusMessage = $"Kontoauszug aktualisiert am {DateTime.Now:dd.MM.yyyy HH:mm}";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Fehler beim Laden des Kontoauszugs: {ex.Message}";
         }
         finally
         {
